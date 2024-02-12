@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func home (writer http.ResponseWriter, request *http.Request) {
@@ -18,12 +20,49 @@ func home (writer http.ResponseWriter, request *http.Request) {
 }
 
 func showSnippet (writer http.ResponseWriter, request *http.Request) {
+	// Extract the value of the id parameter from the URL string
+	// Try to convert it to an integer using the strconv.Atoi package
+	// If it cant convert it to an integer or the value is less than 1
+	// Return a 404
+	id, err := strconv.Atoi(request.URL.Query().Get("id"));
+	if (err != nil || id < 1) {
+		http.NotFound(writer, request);
+		return;
+	}
 	writer.Write([]byte("Display a specific snippet..."));
+
+	// Use the fmt.Fprintf() function to interpolate the ID value
+	// and include it in our response
+	fmt.Fprintf(writer, "Displaying a specific snippet with ID %d...", id);
 }
 
+// First implementation of createSnippet using raw writer.WriteHeader
+// func createSnippet (writer http.ResponseWriter, request *http.Request) {
+// 	// Restrict our createSnippet method to just POST requests
+// 	if request.Method != "POST" {
+// 		// It's only possible to call WriteHeader once per handler.
+// 		// After the status code has been written, it cannot be changed.
+// 		writer.WriteHeader(405);
+// 		writer.Write([]byte("Method not allowed"));
+// 		return;
+// 	}
+
+// 	writer.Write([]byte("Create a new snippet..."));
+// }
+
+// Second implementation that uses the helper http.Error
+// This calls writer.WriteHeader under the hood
 func createSnippet (writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("Create a new snippet..."));
-}
+		// Restrict our createSnippet method to just POST requests
+		if request.Method != "POST" {
+			// Use the http.Error method to send a 405 status code
+			// with the error message of Method not allowed
+			http.Error(writer, "Method not allowed", 405);
+			return;
+		}
+	
+		writer.Write([]byte("Create a new snippet..."));
+	}
 
 func main () {
 	// Initialize a new ServeMux and set it to our var mux
